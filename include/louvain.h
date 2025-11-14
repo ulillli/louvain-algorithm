@@ -12,7 +12,7 @@ class louvain_new {
 	std::vector<std::unordered_set<int>> teck_communities;
 	std::vector<std::unordered_set<int>> communities;
 	std::vector<int> result;
-	graph g; 
+	graph g;
 	int teck_community_count = 0;
 
 	std::vector<int> in;
@@ -30,8 +30,8 @@ public:
 	void setSinglePartition(int n);
 	static float getModularity(const graph& g, const std::vector<int>& partition);
 	int d_i_C(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
-	float getGain(const graph & g, const int& v, const std::vector<int>& partition, const int& C);
-	void remove(int v, int C,const graph & g, std::vector<int>& partition);
+	float getGain(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
+	void remove(int v, int C, const graph& g, std::vector<int>& partition);
 	void insert(int v, int C, const graph& g, std::vector<int>& partition);
 	std::pair<float, int> getBestDelta(const graph& g, const int& v, std::vector<int>& partition);
 
