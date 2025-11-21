@@ -11,12 +11,22 @@ graph::graph(const char* filename, int flag) { //если flag = 0, то в фа
 	adj = std::vector<std::unordered_map<int, double>>(N);
 	if (flag == 0) {
 		while (file >> x >> y) {
-			adj[x].insert({ y,1 });
-			adj[y].insert({ x,1 });
+			if (x != y) { //если вдруг случайно в файле затесались песли их пропускаем 
+				adj[x].insert({ y,1.0 });
+				adj[y].insert({ x,1.0 });
+			}
 		}
-	}
-	for (int i = 0; i < N; i++) {
-		adj[i].insert({i,0});
+		for (int i = 0; i < N; i++) { //добавляем петли сами с 0-ым весом
+			adj[i].insert({ i,0.0 });
+		}
+		float m = 0; 
+		for (int v = 0; v < adj.size(); v++) {
+			for (auto it = adj[v].begin(); it!=adj[v].end(); it++) {
+				m += (*it).second;
+			}
+		}
+		M = m/2.0;
+		std::cout << "Weight of edges = "<< M << std::endl;
 	}
 }
 std::unordered_map<int, double>& graph::operator[](const int& i) {

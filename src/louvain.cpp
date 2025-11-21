@@ -3,6 +3,8 @@
 #include "louvain.h"
 
 int louvain_new::getCommunitiesCount() { return teck_community_count; }
+std::vector<std::unordered_set<int>> louvain_new::getCommunities() { return communities; }
+float louvain_new::getFirstModularity() { return first_modularity; }
 std::vector<int> louvain_new::getPartition() {
 	return result;
 }
@@ -166,7 +168,6 @@ std::pair<float, int> louvain_new::getBestDelta(const graph& g, const int& v, st
 	return { best_gain,best_community };
 }
 void louvain_new::aggregateGraphOptimized(graph& g, std::vector<int>& partition) {
-	
 	std::set<std::pair<int, int>> new_edges;
 	int edges_count = 0;
 	int n = g.getVertexCount();
@@ -214,7 +215,6 @@ void louvain_new::aggregateGraphOptimized(graph& g, std::vector<int>& partition)
 			m += weight;
 		}
 	}
-	std::cout << m << " " << m/2 << std::endl;
 	g = graph(adj, n, m/2);
 	setSinglePartition(teck_community_count);
 }
@@ -239,10 +239,7 @@ void louvain_new::moveNodes(graph& g, std::vector<int>& partition) {
 			}
 		}
 		current_modularity = getModularity(g, partition);
-		std::cout << "Current modularity in moving nodes: " << current_modularity << '\n';
-		//g.printAdjList();
 	} while (current_modularity > old_modularity);
-	
 }
 louvain_new::louvain_new(const graph& G) {
 	N = G.getVertexCount();
@@ -261,8 +258,9 @@ louvain_new::louvain_new(const graph& G) {
 	bool flag = false;
 	auto start = std::chrono::steady_clock::now();
 	float old = getModularity(g, teck_partition);
+	first_modularity = old;
+	std::cout << "Modularity: " << old << '\n';
 	do {
-		std::cout << "Weight of all edges(m) = " << g.getEdgeCount() << std::endl;
 		moveNodes(g, teck_partition);
 		float curr = getModularity(g, teck_partition);
 		if (curr > old) { 
@@ -275,24 +273,18 @@ louvain_new::louvain_new(const graph& G) {
 
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<float> time = end - start;
-	/*for (int c = 0; c < teck_community_count; c++) { //добавить такой тест 
-			for (auto it = communities[c].begin(); it != communities[c].end(); it++) {
-				int v = (*it);
-				if (c != result[v]) std::cout << "mistake " << c << " " << result[v] << "\n ";
-			}
-	}*/
 	std::cout << "Modularity: " << getModularity(G, result) << '\n';
+	std::cout << "Count of communities: " << getCommunitiesCount() << std::endl;
 	std::cout << time.count() << std::endl;
 }
 float louvain_new::getModularity(const graph& g, const std::vector<int>& partition) {
 	int community_count = 0;
 	int n = g.getVertexCount(), m = g.getEdgeCount();
-	//std::cout <<" in modularity " << m << std::endl;
 	for (int i = 0; i < n; i++) {
 		if (partition[i] + 1 > community_count) community_count = partition[i] + 1;
 	}
-	//std::cout << "in modularity community_count " << community_count << std::endl;
-
+	//нужно пересчитывать каждрый раз, потому что не понятно, для какого графа мы пересчитываем, для того, над которым работаем, либо для большого
+	//можно хранить массивы in и tot для всего графа G и для графа который меняется, т.е для g
 	std::vector<int> in = std::vector<int>(community_count, 0);
 	std::vector<int> tot = std::vector<int>(community_count, 0);
 	for (int v = 0; v < n; v++) {
@@ -311,6 +303,5 @@ float louvain_new::getModularity(const graph& g, const std::vector<int>& partiti
 	for (int i = 0; i < community_count; i++) {
 		result += in[i] / (2.0f * m) - (tot[i] / (2.0f * m)) * (tot[i] / (2.0f * m));
 	}
-	//std::cout << "Modularity: " << result <<" for n = " << n << '\n';
 	return result;
 }

@@ -6,7 +6,8 @@
 
 class louvain_new {
 	int N = 0;
-	int M = 0;
+	float M = 0;
+	float first_modularity = 0.0;
 	std::vector<int> teck_partition;
 	std::vector<std::unordered_set<int>> teck_communities;
 	std::vector<std::unordered_set<int>> communities;
@@ -20,6 +21,8 @@ class louvain_new {
 public:
 	int getCommunitiesCount();
 	std::vector<int> getPartition();
+	std::vector<std::unordered_set<int>> getCommunities();
+	float getFirstModularity();
 	void printPartition();
 	void printTeckPartition();
 	void printInTot(int n);
@@ -31,7 +34,7 @@ public:
 
 	void reculculate(const graph& g, const std::vector<int>& partition);
 	void setSinglePartition(int n);
-	static float getModularity(const graph& g, const std::vector<int>& partition);
+	float getModularity(const graph& g, const std::vector<int>& partition);
 	double d_i_C(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
 	double d_i(const graph& g, const int& v);
 	double getGain(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
