@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include "graph.h"
 
-class louvain_new {
+class louvain {
 	int N = 0;
 	float M = 0;
 	float first_modularity = 0.0;
@@ -18,6 +18,8 @@ class louvain_new {
 	std::vector<double> d;
 	std::vector<double> in;
 	std::vector<double> tot;
+	std::vector<double> in_G;
+	std::vector<double> tot_G;
 public:
 	int getCommunitiesCount();
 	std::vector<int> getPartition();
@@ -32,9 +34,11 @@ public:
 	void printResultCommunities();
 	void printD();
 
+	void inizialization(const graph& G);
 	void reculculate(const graph& g, const std::vector<int>& partition);
 	void setSinglePartition(int n);
 	float getModularity(const graph& g, const std::vector<int>& partition);
+	float getModularityOptimized(const graph& g, const std::vector<int>& partition, bool flag);
 	double d_i_C(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
 	double d_i(const graph& g, const int& v);
 	double getGain(const graph& g, const int& v, const std::vector<int>& partition, const int& C);
@@ -42,10 +46,9 @@ public:
 	void insert(int v, int C, const graph& g, std::vector<int>& partition);
 	std::pair<float, int> getBestDelta(const graph& g, const int& v, std::vector<int>& partition);
 
-	graph aggregateGraph(graph& g, std::vector<int>& partition);
 	void aggregateGraphOptimized(graph& g, std::vector<int>& partition);
 	void moveNodes(graph& g, std::vector<int>& partition);
-	louvain_new(const graph& G);
+	louvain(const graph& G);
 };
 
 

@@ -37,7 +37,7 @@ std::vector<std::string> GetTestFiles() {
 }
 TEST_P(LouvainFileTests, CheckingAnswers) { 
 	graph G(filename.data());
-	louvain_new L(G);
+	louvain L(G);
 	std::vector<int> partition = L.getPartition();
 	float first_modularity = L.getFirstModularity();
 	float second_modularity = L.getModularity(G, partition);
@@ -58,18 +58,18 @@ TEST_P(LouvainFileTests, LoadsGraphSuccessfully) {
 }
 TEST_P(LouvainFileTests, LouvainMethodIsWorking) {
 	graph G(filename.data());
-	louvain_new L(G);
+	louvain L(G);
 	EXPECT_GT(L.getCommunitiesCount(), 0) << "Count of communities = 0. File: " << filename;
 }
 TEST_P(LouvainFileTests, ModularityValidation) {
 	graph G(filename.data());
-	louvain_new L(G);
+	louvain L(G);
 	std::vector<int> partition = L.getPartition();
 	ASSERT_EQ(-1<=L.getModularity(G,partition)<=1, 1) << "Modularity isn't in range [-1;1]. File: " << filename;
 }
 TEST_P(LouvainFileTests, CheckingThatCommunitiesMatecheWithPartition) { //проверка, что содержимое communities совпадает с тем, какое разбиение получается в result
 	graph G(filename.data());
-	louvain_new L(G);
+	louvain L(G);
 	std::vector<int> partition = L.getPartition();
 	std::vector<std::unordered_set<int>> communities = L.getCommunities();
 	for (int c = 0; c < L.getCommunitiesCount(); c++) { 
