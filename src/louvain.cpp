@@ -224,10 +224,6 @@ void louvain::moveNodes(graph& g, std::vector<int>& partition) {
 		old_modularity = current_modularity;
 		for (int v = 0; v < n; v++) {
 			int v_community = partition[v];
-			if (v % 10000 == 0) {
-				std::cout << v << std::endl;
-				std::cout << "teck modularity : " << old_modularity << std::endl;
-			}
 			std::pair<float, int> best_delta = getBestDelta(g, v, partition);
 			if (best_delta.first > 0.0 && best_delta.second != v_community) {
 				//float tmp = getModularity(g, partition);

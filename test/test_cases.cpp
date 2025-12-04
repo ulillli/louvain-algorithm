@@ -28,6 +28,30 @@ protected:
 		}
 	}
 };
+class LouvainVecFileTests : public testing::TestWithParam<std::string> {
+protected:
+	std::string filename;
+	std::vector<float> edges;
+	std::vector<float> start_modularity, finish_modularity;
+	std::vector<int> communities_count;
+	void SetUp() override {
+		filename = GetParam();
+		std::ifstream file("../../data/answersFromPython/myanswers.txt", std::ios::in);
+		edges = std::vector<float>(count);
+		start_modularity = std::vector<float>(count);
+		finish_modularity = std::vector<float>(count);
+		communities_count = std::vector<int>(count);
+		for (int i = 0; i < count; i++) {
+			float m, first_modulairty, second_modularity;
+			int n, count;
+			file >> n >> m >> first_modulairty >> second_modularity >> count;
+			edges[i] = m;
+			start_modularity[i] = first_modulairty;
+			finish_modularity[i] = second_modularity;
+			communities_count[i] = count;
+		}
+	}
+};
 std::vector<std::string> GetTestFiles() {
 	std::vector<std::string> files;
 	for (int i = 1; i <= count; i++) {
@@ -35,7 +59,7 @@ std::vector<std::string> GetTestFiles() {
 	}
 	return files;
 }
-TEST_P(LouvainFileTests, CheckingAnswers) { 
+TEST_P(LouvainFileTests, ComparingAnswersToPython) { 
 	graph G(filename.data());
 	louvain L(G);
 	std::vector<int> partition = L.getPartition();
@@ -49,8 +73,25 @@ TEST_P(LouvainFileTests, CheckingAnswers) {
 		i++;
 	}
 	int num = std::stoi(s)-1;
-	float eps = 0.1f;
+	float eps = 0.05f;
 	EXPECT_EQ(true, edges[num] == M && abs(start_modularity[num] - first_modularity) <= eps && abs(finish_modularity[num] - second_modularity) <= eps && abs(communities_count[num] - L.getCommunitiesCount()) <= 4);
+}
+TEST_P(LouvainVecFileTests, CheckingAnswers) {
+	graph G(filename.data());
+	louvain L(G);
+	std::vector<int> partition = L.getPartition();
+	float first_modularity = L.getFirstModularity();
+	float second_modularity = L.getModularity(G, partition);
+	float M = G.getEdgeCount();
+	int i = 22;
+	std::string s = "";
+	while (filename[i] != '.') {
+		s += filename[i];
+		i++;
+	}
+	int num = std::stoi(s) - 1;
+	float eps = 0.000001f;
+	EXPECT_EQ(true, edges[num] == M && abs(start_modularity[num] - first_modularity) <= eps && abs(finish_modularity[num] - second_modularity) <= eps && communities_count[num] == L.getCommunitiesCount());
 }
 TEST_P(LouvainFileTests, LoadsGraphSuccessfully) {
 	graph G(filename.data());
@@ -84,6 +125,15 @@ TEST_P(LouvainFileTests, CheckingThatCommunitiesMatecheWithPartition) { //провер
 //можно добавить тесты на проверку результатов с результатами из python
 INSTANTIATE_TEST_CASE_P( GraphFiles,
 	LouvainFileTests,
+	::testing::ValuesIn(GetTestFiles()),
+	[](const ::testing::TestParamInfo<std::string>& info) {
+		// генерируем читаемые имена тестов
+		std::string name = "Graph" + std::to_string(info.index);
+		return name;
+	}
+);
+INSTANTIATE_TEST_CASE_P(GraphFiles,
+	LouvainVecFileTests,
 	::testing::ValuesIn(GetTestFiles()),
 	[](const ::testing::TestParamInfo<std::string>& info) {
 		// генерируем читаемые имена тестов

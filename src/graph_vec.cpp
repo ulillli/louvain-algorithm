@@ -13,22 +13,27 @@ graph_vec::graph_vec(const char* filename, int flag) { //если flag = 0, то
 	exist = std::vector <std::vector <int>>(N);
 	std::vector<std::unordered_map<int, double>> adj_tmp = std::vector<std::unordered_map<int, double>>(N);
 	if (flag == 0) { 
+		int count = 0;
 		while (file >> x >> y) {
-			if (x != y) { //если вдруг случайно в файле затесались петли их пропускаем 
-				adj_tmp[x].insert({ y,1.0 });
-				adj_tmp[y].insert({ x,1.0 });
+			if (x != y) { 
+				auto result1=adj_tmp[x].insert({ y,1.0 });
+				auto result2= adj_tmp[y].insert({ x,1.0 });
+				if (result1.second) count++;
+				if (result2.second) count++;
 			}
 		}
+		//std::cout << count << std::endl;
 		for (int i = 0; i < N; i++) { //добавляем петли сами с 0-ым весом
 			adj_tmp[i].insert({ i,0.0 });
 		}
-		float m = 0;
-		for (int v = 0; v < adj_tmp.size(); v++) {
+		double m = 0;
+		for (int v = 0; v < N; v++) {
 			for (auto it = adj_tmp[v].begin(); it != adj_tmp[v].end(); it++) {
 				adj[v].push_back({ (*it).first,(*it).second });
 				m += (*it).second;
 			}
 		}
+		//std::cout << m << std::endl;
 		M = m / 2.0;
 	}
 }

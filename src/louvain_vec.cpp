@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <iomanip>
 #include "louvain_vec.h"
 
 int louvain_vec::getCommunitiesCount() { return teck_community_count; }
@@ -84,6 +85,7 @@ void louvain_vec::printD() {
 void louvain_vec::reculculate(const graph_vec& g, const std::vector<int>& partition) {
 	int n = g.getVertexCount();
 	d = std::vector<double>(n, 0);
+	//d_i_c = std::vector<std::unordered_map<int,double>>(n);
 	in = std::vector<double>(teck_community_count, 0);
 	tot = std::vector<double>(teck_community_count, 0);
 	for (int v = 0; v < n; v++) {
@@ -93,6 +95,7 @@ void louvain_vec::reculculate(const graph_vec& g, const std::vector<int>& partit
 			int neighbour_community = partition[neighbour];
 			tot[v_community] += (*it).second;
 			d[v]+= (*it).second;
+			//if(v!= neighbour) d_i_c[v][neighbour_community] += (*it).second;
 			if (neighbour_community == v_community) in[neighbour_community] += (*it).second;
 		}
 	}
@@ -120,19 +123,25 @@ double louvain_vec::d_i_C(const graph_vec& g, const int& v, const std::vector<in
 }
 double louvain_vec::getGain(const graph_vec& g, const int& v, const std::vector<int>& partition, const int& C) {
 	int m = g.getEdgeCount();
-	double gain11 = (in[C] + 2 * d_i_C(g, v, partition, C)) / (2.0f * m);
-	double gain12 = ((tot[C] + d[v]) / (2.0f * m)) * ((tot[C] + d[v]) / (2.0f * m));
-	double gain21 = in[C] / (2.0f * m);
-	double gain22 = (tot[C] / (2.0f * m)) * (tot[C] / (2.0f * m));
-	double gain23 = (d[v] / (2.0f * m)) * (d[v] / (2.0f * m));
+	double gain11 = (in[C] + 2 * d_i_C(g, v, partition, C)) / (2.0 * m);
+	//auto it = d_i_c[v].find(C);
+	//double gain11 = (in[C] + 2 *((it != d_i_c[v].end()) ? it->second : 0.0))/ (2.0 * m);
+	double gain12 = ((tot[C] + d[v]) / (2.0 * m)) * ((tot[C] + d[v]) / (2.0 * m));
+	double gain21 = in[C] / (2.0 * m);
+	double gain22 = (tot[C] / (2.0 * m)) * (tot[C] / (2.0 * m));
+	double gain23 = (d[v] / (2.0 * m)) * (d[v] / (2.0 * m));
 	return (gain11 - gain12) - (gain21 - gain22 - gain23);
 }
 void louvain_vec::remove(int v, int C, const graph_vec& g, std::vector<int>& partition) {
 	in[C] = in[C] - 2 * d_i_C(g, v, partition, C) - g.getWeightOfLoop(v);
+	/*auto it = d_i_c[v].find(C);
+	in[C] = in[C] - 2 * ((it != d_i_c[v].end()) ? it->second : 0.0) - g.getWeightOfLoop(v);*/
 	tot[C] = tot[C] - d[v];
 }
 void louvain_vec::insert(int v, int C, const graph_vec& g, std::vector<int>& partition) {
 	in[C] = in[C] + 2 * d_i_C(g, v, partition, C) + g.getWeightOfLoop(v);
+	/*auto it = d_i_c[v].find(C);
+	in[C] = in[C] + 2 * ((it != d_i_c[v].end()) ? it->second : 0.0) + g.getWeightOfLoop(v);*/
 	tot[C] = tot[C] + d[v];
 }
 std::pair<float, int> louvain_vec::getBestDelta(const graph_vec& g, const int& v, std::vector<int>& partition) {
@@ -141,7 +150,6 @@ std::pair<float, int> louvain_vec::getBestDelta(const graph_vec& g, const int& v
 	remove(v, v_community,g, partition);
 	
 	double best_gain = getGain(g, v, partition, v_community);
-	//std::cout << v << " is moving to " << v_community << " with delta " << best_gain << std::endl;
 	int best_community = v_community;
 	std::set<int> C;
 	for (int j = 0; j < g[v].size(); j++) {
@@ -152,7 +160,6 @@ std::pair<float, int> louvain_vec::getBestDelta(const graph_vec& g, const int& v
 	for (auto it = C.begin(); it != C.end(); it++) {
 		int community = *it;
 		double gain = getGain(g, v, partition, community);
-		//std::cout << v << " is moving to " << community << " with delta " << gain << std::endl;
 		if (gain > best_gain) {
 			best_gain = gain;
 			best_community = community;
@@ -235,19 +242,27 @@ void louvain_vec::moveNodes(graph_vec& g, std::vector<int>& partition) {
 		old_modularity = current_modularity;
 		for (int v = 0; v < n; v++) {
 			int v_community = partition[v];
-			if (v % 10000 == 0) {
-				std::cout << v << std::endl;
-				//std::cout << "teck modularity : " << old_modularity << std::endl;
-			}
+			if (v!=0 && v % 100000 == 0) std::cout << v << std::endl;
 			std::pair<float, int> best_delta = getBestDelta(g, v, partition);
 			if (best_delta.first > 0.0 && best_delta.second != v_community) {
-				double tmp = getModularityOptimized(g, partition, 1);
+				//double tmp = getModularityOptimized(g, partition, 1);
+
+				//for (int i = 0; i < g[v].size(); i++) {
+				//	if (g[v][i].first != v) {
+				//		//if (partition[g[v][i].first] == v_community) d_i_c[v][v_community] += g[v][i].second;
+				//		d_i_c[g[v][i].first][v_community] -= g[v][i].second;
+				//		d_i_c[g[v][i].first][best_delta.second] += g[v][i].second;
+				//		if (d_i_c[g[v][i].first][v_community] == 0.0) d_i_c[g[v][i].first].erase(v_community);
+				//	}
+
+				//}
 				partition[v] = best_delta.second;
 				teck_communities[best_delta.second].insert(v);
 				teck_communities[v_community].erase(v);
 			}
 		}
 		current_modularity = getModularityOptimized(g, partition, 1);
+		std::cout << std::setprecision(20) << current_modularity << std::endl;
 	} while (current_modularity > old_modularity);
 }
 void louvain_vec::inizialization(const graph_vec& G) {
@@ -292,32 +307,6 @@ louvain_vec::louvain_vec(const graph_vec& G) {
 	std::cout << "Count of communities: " << getCommunitiesCount() << std::endl;
 	std::cout << time.count() << std::endl;
 }
-float louvain_vec::getModularity(const graph_vec& g, const std::vector<int>& partition) {
-	int community_count = 0;
-	int n = g.getVertexCount(), m = g.getEdgeCount();
-	for (int i = 0; i < n; i++) {
-		if (partition[i] + 1 > community_count) community_count = partition[i] + 1;
-	}
-	std::vector<int> in = std::vector<int>(community_count, 0);
-	std::vector<int> tot = std::vector<int>(community_count, 0);
-	for (int v = 0; v < n; v++) {
-		int v_community = partition[v];
-		for (auto it = g[v].begin(); it != g[v].end(); it++) {
-			int neighbour = (*it).first;
-			int neighbour_community = partition[neighbour];
-			tot[v_community] += (*it).second;
-			if (neighbour_community == v_community) { 
-				in[neighbour_community] += (*it).second; 
-			}
-		}
-	}
-	
-	float result = 0;
-	for (int i = 0; i < community_count; i++) {
-		result += in[i] / (2.0f * m) - (tot[i] / (2.0f * m)) * (tot[i] / (2.0f * m));
-	}
-	return result;
-}
 double louvain_vec::getModularityOptimized(const graph_vec & g, const std::vector<int>& partition, bool flag) {
 	int community_count = 0;
 	int n = g.getVertexCount(), m = g.getEdgeCount();
@@ -333,6 +322,32 @@ double louvain_vec::getModularityOptimized(const graph_vec & g, const std::vecto
 		for (int i = 0; i < community_count; i++) {
 			result += in[i] *tmp - (tot[i]*tmp) * (tot[i] *tmp);
 		}
+	}
+	return result;
+}
+float louvain_vec::getModularity(const graph_vec& g, const std::vector<int>& partition) {
+	int community_count = 0;
+	int n = g.getVertexCount(), m = g.getEdgeCount();
+	for (int i = 0; i < n; i++) {
+		if (partition[i] + 1 > community_count) community_count = partition[i] + 1;
+	}
+	std::vector<int> in = std::vector<int>(community_count, 0);
+	std::vector<int> tot = std::vector<int>(community_count, 0);
+	for (int v = 0; v < n; v++) {
+		int v_community = partition[v];
+		for (auto it = g[v].begin(); it != g[v].end(); it++) {
+			int neighbour = (*it).first;
+			int neighbour_community = partition[neighbour];
+			tot[v_community] += (*it).second;
+			if (neighbour_community == v_community) {
+				in[neighbour_community] += (*it).second;
+			}
+		}
+	}
+
+	float result = 0;
+	for (int i = 0; i < community_count; i++) {
+		result += in[i] / (2.0f * m) - (tot[i] / (2.0f * m)) * (tot[i] / (2.0f * m));
 	}
 	return result;
 }

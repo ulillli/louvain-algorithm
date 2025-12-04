@@ -16,6 +16,7 @@ class louvain_vec {
 	graph_vec g;
 	int teck_community_count = 0;
 	std::vector<double> d;
+	std::vector<std::unordered_map<int, double>> d_i_c; //номер сообщества, суммарный вес ребер-соседей, входящих в сообщество 
 	std::vector<double> in;
 	std::vector<double> tot;
 	std::vector<double> in_G;
